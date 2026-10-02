@@ -142,7 +142,8 @@ window.addEventListener('resize', () => {
 const clock = new THREE.Clock();
 let t = 0;
 renderer.setAnimationLoop(() => {
-  t += clock.getDelta() * params.speed;
+  // Clamp delta so time does not jump after the page was paused
+  t += Math.min(clock.getDelta(), 0.1) * params.speed;
   material.uniforms.uTime.value = t;
   camera.position.x = Math.sin(t * 0.03) * 0.8;
   camera.lookAt(0, -0.3, 0);
