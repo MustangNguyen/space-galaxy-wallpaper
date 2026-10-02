@@ -5,7 +5,8 @@ Intended to run on Linux via [linux-wallpaperengine](https://github.com/Almamu/l
 
 ## Files
 
-- `index.html` — the wallpaper (Three.js loaded from jsDelivr CDN)
+- `index.html` — the wallpaper
+- `vendor/three.module.min.js` — Three.js r169, bundled so the wallpaper works offline (MIT, see `vendor/THREE-LICENSE`)
 - `project.json` — Wallpaper Engine manifest with user properties (rotation speed, particle count)
 
 ## Run
