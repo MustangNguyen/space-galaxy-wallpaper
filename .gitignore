@@ -1,0 +1,4 @@
+.claude/
+.omc/
+node_modules/
+*.log

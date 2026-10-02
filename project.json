@@ -1,0 +1,12 @@
+{
+  "title": "Particles Galaxy",
+  "type": "web",
+  "file": "index.html",
+  "description": "Spiral particle galaxy rendered with Three.js",
+  "general": {
+    "properties": {
+      "speed": { "order": 0, "text": "Rotation speed", "type": "slider", "min": 0, "max": 5, "step": 0.1, "value": 1 },
+      "count": { "order": 1, "text": "Particle count (x1000)", "type": "slider", "min": 20, "max": 300, "step": 10, "value": 120 }
+    }
+  }
+}

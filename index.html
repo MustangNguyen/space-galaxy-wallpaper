@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Particles Galaxy</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+    canvas { display: block; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" } }
+  </script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
+const params = {
+  count: 120000,
+  radius: 6,
+  branches: 4,
+  spin: 1.1,
+  randomness: 0.35,
+  randomnessPower: 3,
+  insideColor: '#ff8a3d',
+  outsideColor: '#3b4cff',
+  speed: 1,
+};
+
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 3.2, 6.0);
+camera.lookAt(0, -0.3, 0);
+
+// Background stars
+function makeStars(n) {
+  const pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const r = 30 + Math.random() * 30;
+    const t = Math.random() * Math.PI * 2;
+    const p = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = r * Math.sin(p) * Math.cos(t);
+    pos[i * 3 + 1] = r * Math.cos(p);
+    pos[i * 3 + 2] = r * Math.sin(p) * Math.sin(t);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: 0.08, color: 0xbfd4ff, transparent: true, opacity: 0.7, depthWrite: false }));
+}
+scene.add(makeStars(4000));
+
+// Galaxy: positions are static, rotation is done in the vertex shader
+// (inner particles orbit faster than outer ones).
+const material = new THREE.ShaderMaterial({
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  vertexColors: true,
+  uniforms: {
+    uTime: { value: 0 },
+    uSize: { value: 48 * renderer.getPixelRatio() },
+  },
+  vertexShader: /* glsl */`
+    uniform float uTime;
+    uniform float uSize;
+    attribute float aScale;
+    varying vec3 vColor;
+    void main() {
+      vec4 mp = modelMatrix * vec4(position, 1.0);
+      float angle = atan(mp.x, mp.z);
+      float dist = length(mp.xz);
+      angle += (1.0 / (dist + 0.3)) * uTime * 0.25;
+      mp.x = cos(angle) * dist;
+      mp.z = sin(angle) * dist;
+      vec4 vp = viewMatrix * mp;
+      gl_Position = projectionMatrix * vp;
+      gl_PointSize = uSize * aScale * (1.0 / -vp.z);
+      vColor = color;
+    }
+  `,
+  fragmentShader: /* glsl */`
+    varying vec3 vColor;
+    void main() {
+      float d = distance(gl_PointCoord, vec2(0.5));
+      float strength = pow(1.0 - d, 5.0);
+      gl_FragColor = vec4(vColor * strength, 1.0);
+    }
+  `,
+});
+
+let galaxy = null;
+function buildGalaxy() {
+  if (galaxy) { galaxy.geometry.dispose(); scene.remove(galaxy); }
+  const n = params.count;
+  const pos = new Float32Array(n * 3);
+  const col = new Float32Array(n * 3);
+  const scale = new Float32Array(n);
+  const cIn = new THREE.Color(params.insideColor);
+  const cOut = new THREE.Color(params.outsideColor);
+
+  for (let i = 0; i < n; i++) {
+    const r = Math.pow(Math.random(), 1.4) * params.radius;
+    const branch = ((i % params.branches) / params.branches) * Math.PI * 2;
+    const rnd = () => Math.pow(Math.random(), params.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * params.randomness * (r + 0.4);
+    const a = branch + r * params.spin;
+    pos[i * 3] = Math.cos(a) * r + rnd();
+    pos[i * 3 + 1] = rnd() * 0.45;
+    pos[i * 3 + 2] = Math.sin(a) * r + rnd();
+
+    const c = cIn.clone().lerp(cOut, r / params.radius);
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+    scale[i] = Math.random();
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('aScale', new THREE.BufferAttribute(scale, 1));
+  galaxy = new THREE.Points(g, material);
+  galaxy.rotation.z = 0.18;
+  scene.add(galaxy);
+}
+buildGalaxy();
+
+// Wallpaper Engine user properties (ignored when opened in a normal browser)
+window.wallpaperPropertyListener = {
+  applyUserProperties(p) {
+    if (p.speed) params.speed = p.speed.value;
+    if (p.count) { params.count = p.count.value * 1000; buildGalaxy(); }
+  },
+};
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const clock = new THREE.Clock();
+let t = 0;
+renderer.setAnimationLoop(() => {
+  t += clock.getDelta() * params.speed;
+  material.uniforms.uTime.value = t;
+  camera.position.x = Math.sin(t * 0.03) * 0.8;
+  camera.lookAt(0, -0.3, 0);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
