@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tranh hạt · Đêm đầy sao</title>
+  <link rel="icon" href="data:,">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #070a11; color: #e6e4df; font-family: system-ui, sans-serif; }
+    canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    header { position: fixed; top: 28px; left: 36px; pointer-events: none; }
+    .eyebrow { margin: 0 0 8px; font-size: 10px; letter-spacing: .23em; color: #b9a77a; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 25px; font-weight: 450; letter-spacing: -.04em; }
+    #caption { margin: 7px 0 0; font-size: 12px; color: #8e95a6; }
+    #status { position: fixed; right: 36px; top: 32px; color: #8e95a6; font-size: 11px; font-variant-numeric: tabular-nums; }
+    footer { position: fixed; bottom: 25px; left: 36px; right: 36px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .hint { color: #8e95a6; font-size: 12px; margin: 0; }
+    .hint strong { color: #c9c1ac; font-weight: 500; }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .motion-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 24px; width: 100%; }
+    .motion-control { display: grid; grid-template-columns: auto 110px 32px; align-items: center; gap: 8px; color: #a9afbd; font-size: 12px; }
+    .motion-control input { width: 110px; accent-color: #d7b76c; }
+    .motion-control output { font-variant-numeric: tabular-nums; text-align: right; }
+    footer { flex-wrap: wrap; }
+    .rate-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #a9afbd; white-space: nowrap; }
+    button, select, .upload { border: 1px solid #303542; background: #111620; color: #d5d7de; padding: 9px 12px; border-radius: 7px; font: 12px system-ui; cursor: pointer; }
+    button:hover, .upload:hover, select:hover { background: #1d2430; border-color: #71664c; }
+    :focus-visible { outline: 2px solid #d7b76c; outline-offset: 3px; }
+    #image-file { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .upload:focus-within { outline: 2px solid #d7b76c; }
+    #message { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); color: #d8bd84; font-size: 13px; text-align: center; }
+    #pointer-ring { position: fixed; width: 34px; height: 34px; margin: -17px; border: 1px solid #d6bd7b80; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .2s; }
+    @media (max-width: 1050px) { footer { flex-direction: column; } .controls { justify-content: center; } }
+    @media (max-width: 650px) {
+      header { left: 18px; top: 20px; } h1 { font-size: 21px; }
+      #status { right: 18px; top: 23px; max-width: 110px; text-align: right; }
+      footer { left: 18px; right: 18px; bottom: 18px; flex-direction: column; gap: 12px; }
+      button, select, .upload { padding: 8px; }
+    }
+  </style>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+</head>
+<body>
+  <header><p class="eyebrow">Chuyển động · Sắc màu</p><h1>Đêm đầy sao, từng hạt.</h1><p id="caption">Vincent van Gogh · 1889</p></header>
+  <span id="status">Đang chuẩn bị hạt…</span>
+  <div id="message" role="status">Đang lấy màu từ bức tranh…</div>
+  <div id="pointer-ring" aria-hidden="true"></div>
+  <footer>
+    <div class="motion-controls">
+      <label class="motion-control" title="Thấp: giữ đà lâu. Cao: chuyển động tắt nhanh.">Lực cản <input id="damping" type="range" min="0.2" max="6" step="0.1" value="0.2"><output id="damping-value" for="damping">0.2</output></label>
+      <label class="motion-control" title="Thấp: hồi về chậm. Cao: kéo về mạnh và nhanh hơn.">Lực hồi về <input id="spring" type="range" min="0.5" max="20" step="0.1" value="0.5"><output id="spring-value" for="spring">0.5</output></label>
+    </div>
+    <p class="hint"><strong>Rê chuột để khuấy màu.</strong> Dừng tay, gợn sóng vẫn nhẹ trôi.</p>
+    <div class="controls">
+      <select id="quality" aria-label="Chất lượng"><option value="light">Nhẹ · 12.000</option><option value="balanced">Mịn · 48.000</option><option value="detail" selected>Rất mịn · 96.000</option></select>
+      <label class="rate-label">Tương tác
+        <select id="interaction-rate" aria-label="Tần suất tương tác" title="Tần suất lấy mẫu lực chuột. Hz cao tạo nét mượt hơn nhưng tốn CPU hơn; không thay đổi giới hạn FPS.">
+          <option value="30">30 Hz</option><option value="60">60 Hz</option>
+          <option value="120">120 Hz</option><option value="240" selected>240 Hz</option>
+        </select>
+      </label>
+      <button id="reset" type="button">Về chỗ cũ</button>
+      <label class="upload">Đổi tranh<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+    </div>
+  </footer>
+  <script type="module" src="./particle-painting.mjs"></script>
+</body>
+</html>
