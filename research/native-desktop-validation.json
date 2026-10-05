@@ -1,0 +1,259 @@
+{
+  "timestamp": 1791182582.0771532,
+  "summary": {
+    "0": {
+      "averageSubmittedFps": 92.10774410887595,
+      "minTwoSecondFps": 85.4670471116493,
+      "maxTwoSecondFps": 97.47754726540097,
+      "interactionSamplesAdded": 0
+    },
+    "1": {
+      "averageSubmittedFps": 94.45539530480458,
+      "minTwoSecondFps": 90.80940762616818,
+      "maxTwoSecondFps": 98.47731698094356,
+      "interactionSamplesAdded": 0
+    }
+  },
+  "samples": [
+    {
+      "0": {
+        "count": 95700,
+        "fps": 85.4670471116493,
+        "framesRendered": 21675,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 6.209329001605511,
+        "receivedAt": 1791182560578,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 90.96492733520567,
+        "framesRendered": 21790,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 1.1863819994032383,
+        "receivedAt": 1791182560578,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 88.31464368039433,
+        "framesRendered": 21852,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 0.9791910015046597,
+        "receivedAt": 1791182562582,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 90.80940762616818,
+        "framesRendered": 21972,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 0.9600290022790432,
+        "receivedAt": 1791182562582,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 97.47754726540097,
+        "framesRendered": 22047,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 1.3801679983735085,
+        "receivedAt": 1791182564582,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 98.47731698094356,
+        "framesRendered": 22169,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 1.1978019997477531,
+        "receivedAt": 1791182564582,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 91.32296768745553,
+        "framesRendered": 22230,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 6.677914999425411,
+        "receivedAt": 1791182566586,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 94.31716334933932,
+        "framesRendered": 22358,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 3.1637930013239384,
+        "receivedAt": 1791182566586,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 94.71387086429912,
+        "framesRendered": 22420,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 1.0055210031569004,
+        "receivedAt": 1791182568592,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 96.70784709302121,
+        "framesRendered": 22552,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 1.1414780020713806,
+        "receivedAt": 1791182568592,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 96.49997066396529,
+        "framesRendered": 22613,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 1.8632539995014668,
+        "receivedAt": 1791182570592,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 97.49997035996492,
+        "framesRendered": 22747,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 1.4531240016222,
+        "receivedAt": 1791182570592,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 90.97556755601518,
+        "framesRendered": 22795,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 3.3457930013537407,
+        "receivedAt": 1791182572593,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 92.47516482342202,
+        "framesRendered": 22932,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 2.809588998556137,
+        "receivedAt": 1791182572593,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 94.86848779996791,
+        "framesRendered": 22985,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 1.3056879974901676,
+        "receivedAt": 1791182574595,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 95.8671034610202,
+        "framesRendered": 23124,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 1.103557001799345,
+        "receivedAt": 1791182574595,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 88.49235129634967,
+        "framesRendered": 23162,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 11.661389000713825,
+        "receivedAt": 1791182576596,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 90.9921352312748,
+        "framesRendered": 23306,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 10.489771999418736,
+        "receivedAt": 1791182576596,
+        "width": 1920
+      }
+    },
+    {
+      "0": {
+        "count": 95700,
+        "fps": 92.9449871632621,
+        "framesRendered": 23348,
+        "height": 1080,
+        "interactionSamples": 5594,
+        "paused": false,
+        "physicsMs": 3.198871001601219,
+        "receivedAt": 1791182578597,
+        "width": 1920
+      },
+      "1": {
+        "count": 95700,
+        "fps": 96.44291678768595,
+        "framesRendered": 23499,
+        "height": 1080,
+        "interactionSamples": 4269,
+        "paused": false,
+        "physicsMs": 7.713392000645399,
+        "receivedAt": 1791182578597,
+        "width": 1920
+      }
+    }
+  ]
+}

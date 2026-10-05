@@ -1,0 +1,74 @@
+{
+  "pauseStart": {
+    "0": {
+      "count": 95700,
+      "fps": 47.80048700520685,
+      "framesRendered": 19298,
+      "height": 1080,
+      "interactionSamples": 2928,
+      "paused": true,
+      "physicsMs": 0.8674589991569519,
+      "receivedAt": 1791182530545,
+      "width": 1920
+    },
+    "1": {
+      "count": 95700,
+      "fps": 47.80048700520685,
+      "framesRendered": 19368,
+      "height": 1080,
+      "interactionSamples": 3490,
+      "paused": true,
+      "physicsMs": 0.7209210023283958,
+      "receivedAt": 1791182530545,
+      "width": 1920
+    }
+  },
+  "pauseEnd": {
+    "0": {
+      "count": 95700,
+      "fps": 0.0,
+      "framesRendered": 19298,
+      "height": 1080,
+      "interactionSamples": 2928,
+      "paused": true,
+      "physicsMs": 0.8674589991569519,
+      "receivedAt": 1791182534556,
+      "width": 1920
+    },
+    "1": {
+      "count": 95700,
+      "fps": 0.0,
+      "framesRendered": 19368,
+      "height": 1080,
+      "interactionSamples": 3490,
+      "paused": true,
+      "physicsMs": 0.7209210023283958,
+      "receivedAt": 1791182534556,
+      "width": 1920
+    }
+  },
+  "resume": {
+    "0": {
+      "count": 95700,
+      "fps": 97.4688374094483,
+      "framesRendered": 19575,
+      "height": 1080,
+      "interactionSamples": 3309,
+      "paused": false,
+      "physicsMs": 1.6897470019757748,
+      "receivedAt": 1791182538559,
+      "width": 1920
+    },
+    "1": {
+      "count": 95700,
+      "fps": 97.96867760129162,
+      "framesRendered": 19648,
+      "height": 1080,
+      "interactionSamples": 3665,
+      "paused": false,
+      "physicsMs": 1.7026049979031086,
+      "receivedAt": 1791182538559,
+      "width": 1920
+    }
+  }
+}

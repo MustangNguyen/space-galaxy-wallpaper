@@ -1,0 +1,10 @@
+{
+  "title": "Đêm đầy sao · Tranh hạt",
+  "type": "web",
+  "file": "index.html",
+  "description": "Interactive luminous round particles. Saved drag 0.2, return 0.5, 96k particles, interaction 240 Hz; uncapped rendering.",
+  "hanabi": {
+    "sharedView": false,
+    "renderer": "native"
+  }
+}

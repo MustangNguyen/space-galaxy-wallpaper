@@ -1,0 +1,308 @@
+diff --git a/src/dbus.ts b/src/dbus.ts
+index 5dc587a..f0977eb 100644
+--- a/src/dbus.ts
++++ b/src/dbus.ts
+@@ -32,6 +32,7 @@ type DBusSignalProxy = Gio.DBusProxy & {
+ interface RendererProxy extends DBusSignalProxy {
+     setPlayAsync(): Promise<void>;
+     setPauseAsync(): Promise<void>;
++    setPointerAsync(monitor: number, x: number, y: number, active: boolean): Promise<void>;
+ }
+ 
+ // Ref: https://gjs.guide/guides/gio/dbus.html#high-level-proxies
+@@ -50,6 +51,12 @@ export class RendererWrapper {
+             <interface name="${APPLICATION_ID}">
+                 <method name="setPlay"/>
+                 <method name="setPause"/>
++                <method name="setPointer">
++                    <arg name="monitor" type="i" direction="in"/>
++                    <arg name="x" type="d" direction="in"/>
++                    <arg name="y" type="d" direction="in"/>
++                    <arg name="active" type="b" direction="in"/>
++                </method>
+                 <property name="isPlaying" type="b" access="read"/>
+                 <signal name="isPlayingChanged">
+                     <arg name="isPlaying" type="b"/>
+@@ -75,6 +82,14 @@ export class RendererWrapper {
+             this.logger.warn(e);
+         }
+     }
++
++    async setPointer(monitor: number, x: number, y: number, active: boolean): Promise<void> {
++        try {
++            await this.proxy.setPointerAsync(monitor, x, y, active);
++        } catch {
++            // The renderer may be between launches. The next sample will retry.
++        }
++    }
+ }
+ 
+ interface UPowerProxy extends DBusSignalProxy {
+diff --git a/src/extension.ts b/src/extension.ts
+index 99dea7f..651a926 100644
+--- a/src/extension.ts
++++ b/src/extension.ts
+@@ -27,6 +27,7 @@ import {PlaybackState} from './playbackState.js';
+ import {AutoPause} from './autoPause.js';
+ import {HanabiPanelMenu} from './panelMenu.js';
+ import {Logger} from './logger.js';
++import {RendererWrapper} from './dbus.js';
+ 
+ const logger = new Logger('extension');
+ 
+@@ -35,6 +36,7 @@ const RENDERER_RELOAD_DELAY_MS = 100;
+ const RENDERER_RELOAD_DELAY_ON_ERROR_MS = 1000;
+ // Debounce for coalescing rapid monitors-changed events (ms).
+ const MONITORS_CHANGED_DEBOUNCE_MS = 500;
++const POINTER_UPDATE_INTERVAL_MS = 33;
+ 
+ // An emitter paired with a signal handler id, disconnected together in disable().
+ type SignalConnection = [emitter: { disconnect(id: number): void }, id: number];
+@@ -49,6 +51,7 @@ export default class HanabiExtension extends Extension {
+     private shellOverride: GnomeShellOverride | null = null;
+     private windowManager: WindowManager | null = null;
+     private autoPause: AutoPause | null = null;
++    private pointerRenderer: RendererWrapper | null = null;
+ 
+     // Renderer subprocess and its relaunch timeout.
+     private currentProcess: WaylandSubprocess | null = null;
+@@ -59,6 +62,8 @@ export default class HanabiExtension extends Extension {
+     // Signal connections and the monitors-changed timeout, cleaned up in disable().
+     private signalConnections: SignalConnection[] = [];
+     private monitorsChangedTimeoutId = 0;
++    private pointerTimeoutId = 0;
++    private pointerUpdatePending = false;
+ 
+     getPlaybackState(): PlaybackState {
+         return this.playbackState!;
+@@ -124,6 +129,7 @@ export default class HanabiExtension extends Extension {
+         this.shellOverride!.enable();
+         this.windowManager!.enable();
+         this.autoPause!.enable();
++        this.startPointerForwarding();
+ 
+         const monitorsChangedId = Main.layoutManager.connect(
+             'monitors-changed',
+@@ -176,6 +182,7 @@ export default class HanabiExtension extends Extension {
+             return;
+         logger.debug('Suspending renderer (lock screen)');
+         this.rendererSuspended = true;
++        this.stopPointerForwarding();
+         if (this.launchRendererTimeoutId) {
+             GLib.source_remove(this.launchRendererTimeoutId);
+             this.launchRendererTimeoutId = 0;
+@@ -189,6 +196,7 @@ export default class HanabiExtension extends Extension {
+             return;
+         logger.debug('Resuming renderer');
+         this.rendererSuspended = false;
++        this.startPointerForwarding();
+         if (this.isEnabled && !this.currentProcess)
+             this.launchRenderer();
+     }
+@@ -251,6 +259,7 @@ export default class HanabiExtension extends Extension {
+     disable(): void {
+         logger.debug('Disabling');
+ 
++        this.stopPointerForwarding();
+         this.killCurrentProcess();
+         this.rendererSuspended = false;
+ 
+@@ -271,6 +280,51 @@ export default class HanabiExtension extends Extension {
+         this.isEnabled = false;
+     }
+ 
++    private startPointerForwarding(): void {
++        if (this.pointerTimeoutId)
++            return;
++
++        this.pointerRenderer = new RendererWrapper();
++        this.forwardPointer();
++        this.pointerTimeoutId = GLib.timeout_add(
++            GLib.PRIORITY_DEFAULT,
++            POINTER_UPDATE_INTERVAL_MS,
++            () => {
++                this.forwardPointer();
++                return GLib.SOURCE_CONTINUE;
++            }
++        );
++    }
++
++    private stopPointerForwarding(): void {
++        if (this.pointerTimeoutId) {
++            GLib.source_remove(this.pointerTimeoutId);
++            this.pointerTimeoutId = 0;
++        }
++        this.pointerRenderer = null;
++        this.pointerUpdatePending = false;
++    }
++
++    private forwardPointer(): void {
++        if (!this.pointerRenderer || this.pointerUpdatePending)
++            return;
++
++        const [pointerX, pointerY] = global.get_pointer();
++        const monitorIndex = Main.layoutManager.monitors.findIndex(monitor =>
++            pointerX >= monitor.x && pointerX < monitor.x + monitor.width &&
++            pointerY >= monitor.y && pointerY < monitor.y + monitor.height
++        );
++        const monitor = Main.layoutManager.monitors[monitorIndex];
++        const active = monitor !== undefined;
++        const x = active ? Math.min(Math.max((pointerX - monitor.x) / monitor.width, 0), 1) : 0;
++        const y = active ? Math.min(Math.max((pointerY - monitor.y) / monitor.height, 0), 1) : 0;
++
++        this.pointerUpdatePending = true;
++        void this.pointerRenderer.setPointer(monitorIndex, x, y, active).finally(() => {
++            this.pointerUpdatePending = false;
++        });
++    }
++
+     private killCurrentProcess(): void {
+         if (this.launchRendererTimeoutId) {
+             GLib.source_remove(this.launchRendererTimeoutId);
+diff --git a/src/gnomeShellOverride.ts b/src/gnomeShellOverride.ts
+index e890e50..c5532e6 100644
+--- a/src/gnomeShellOverride.ts
++++ b/src/gnomeShellOverride.ts
+@@ -221,18 +221,9 @@ export class GnomeShellOverride {
+         // exclude the renderer from the app tracker.
+         // -----------------------------------------------------------------
+ 
+-        this.injectionManager.overrideMethod(
+-            Shell.WindowTracker.prototype,
+-            'get_window_app',
+-            originalMethod => {
+-                return function (this: Shell.WindowTracker, window: Meta.Window) {
+-                    const isRenderer = window.title?.includes(APPLICATION_ID);
+-                    // null! is a type lie: InjectionManager's strict return type requires
+-                    // App, but we intentionally return null for renderer windows.
+-                    return isRenderer ? null! : originalMethod.apply(this, [window]);
+-                };
+-            }
+-        );
++        // Keep get_window_app intact: GNOME 50's WindowPreview requires an App
++        // while a renderer is moving between monitors. Filter public window/app
++        // lists below instead of returning null during that transition.
+ 
+         this.injectionManager.overrideMethod(
+             Shell.App.prototype,
+diff --git a/src/renderer/renderer.ts b/src/renderer/renderer.ts
+index 6225f5e..25157ad 100644
+--- a/src/renderer/renderer.ts
++++ b/src/renderer/renderer.ts
+@@ -66,7 +66,7 @@ try {
+     // WebKitGTK 6.0 (GTK4) is optional; only needed for web wallpapers
+     // @ts-expect-error -- no @girs/webkit-6.0 types; WebKit is used untyped
+     WebKit = ((await import('gi://WebKit?version=6.0')) as any).default;
+-} catch (e) {
++} catch (_e) {
+     console.warn('WebKit 6.0, or the typelib is not installed. Web wallpapers are disabled.');
+ }
+ const haveWebKit = WebKit !== null;
+@@ -76,6 +76,7 @@ const useGstGL = isGstVersionAtLeast(1, 24);
+ 
+ interface WebWallpaper {
+     uri: string;
++    sharedView: boolean;
+     // Wallpaper Engine style user properties: {key: {value}}
+     properties: Record<string, {value: unknown}>;
+ }
+@@ -104,6 +105,8 @@ const WEB_PAUSE_SCRIPT = `(() => {
+ /**
+  * Resolves a wallpaper path to a web wallpaper, or null when it is a video.
+  * Accepts an .html file, or a Wallpaper Engine folder with project.json of type "web".
++ *
++ * @param {string} path local wallpaper file or directory
+  */
+ function resolveWebWallpaper(path: string): WebWallpaper | null {
+     if (!path)
+@@ -125,7 +128,8 @@ function resolveWebWallpaper(path: string): WebWallpaper | null {
+         return null;
+     }
+ 
+-    let properties: Record<string, {value: unknown}> = {};
++    let sharedView = false;
++    const properties: Record<string, {value: unknown}> = {};
+     const projectFile = dir?.get_child('project.json');
+     if (projectFile?.query_exists(null)) {
+         try {
+@@ -135,6 +139,7 @@ function resolveWebWallpaper(path: string): WebWallpaper | null {
+                 return null;
+             if (!htmlFile && project.file)
+                 htmlFile = dir!.get_child(project.file);
++            sharedView = project.hanabi?.sharedView === true;
+             for (const [key, prop] of Object.entries<any>(project.general?.properties ?? {}))
+                 properties[key] = {value: prop.value};
+         } catch (e) {
+@@ -146,7 +151,7 @@ function resolveWebWallpaper(path: string): WebWallpaper | null {
+     if (!htmlFile?.query_exists(null))
+         return null;
+ 
+-    return {uri: htmlFile.get_uri(), properties};
++    return {uri: htmlFile.get_uri(), properties, sharedView};
+ }
+ 
+ let extSettings: Gio.Settings | null = null;
+@@ -432,9 +437,20 @@ const HanabiRenderer = GObject.registerClass(
+                 this.gstImplName = 'WebKitWebView';
+ 
+             this.monitors.forEach((gdkMonitor, index) => {
+-                let widget: Gtk.Widget | null = this.webWallpaper
+-                    ? this.getWebWidget(this.webWallpaper)
+-                    : this.getWidgetFromSharedPaintable();
++                let widget: Gtk.Widget | null;
++                if (this.webWallpaper?.sharedView) {
++                    // Opt-in mirroring avoids a second WebGL simulation and context.
++                    if (index === 0) {
++                        widget = this.getWebWidget(this.webWallpaper);
++                        this.sharedPaintable = new Gtk.WidgetPaintable({widget});
++                    } else {
++                        widget = this.getWidgetFromSharedPaintable();
++                    }
++                } else {
++                    widget = this.webWallpaper
++                        ? this.getWebWidget(this.webWallpaper)
++                        : this.getWidgetFromSharedPaintable();
++                }
+ 
+                 if (index > 0 && !widget)
+                     return;
+@@ -702,6 +718,12 @@ const HanabiRenderer = GObject.registerClass(
+                 <interface name="${APPLICATION_ID}">
+                     <method name="setPlay"/>
+                     <method name="setPause"/>
++                    <method name="setPointer">
++                        <arg name="monitor" type="i" direction="in"/>
++                        <arg name="x" type="d" direction="in"/>
++                        <arg name="y" type="d" direction="in"/>
++                        <arg name="active" type="b" direction="in"/>
++                    </method>
+                     <property name="isPlaying" type="b" access="read"/>
+                     <signal name="isPlayingChanged">
+                         <arg name="isPlaying" type="b"/>
+@@ -752,7 +774,7 @@ const HanabiRenderer = GObject.registerClass(
+ 
+         setFilePath(_videoPath: string): void {
+             const web = haveWebKit ? resolveWebWallpaper(_videoPath) : null;
+-            if (!!web !== !!this.webWallpaper) {
++            if (!!web !== !!this.webWallpaper || web?.sharedView !== this.webWallpaper?.sharedView) {
+                 // Switching between video and web needs a different widget tree;
+                 // exit and let the extension relaunch the renderer.
+                 this.quit();
+@@ -793,6 +815,17 @@ const HanabiRenderer = GObject.registerClass(
+                 this.setWebPlaying(false);
+         }
+ 
++        setPointer(_monitor: number, _x: number, _y: number, _active: boolean): void {
++            this.webViews.forEach((view, index) => {
++                const payload = JSON.stringify({
++                    x: _x,
++                    y: _y,
++                    active: _active && (this.webWallpaper?.sharedView || index === _monitor),
++                });
++                this.runWebScript(view, `window.wallpaperPointerListener?.(${payload});`);
++            });
++        }
++
+         setAutoWallpaper(): void {
+             let currentIndex = 0;
+             let videoPaths: string[] = [];

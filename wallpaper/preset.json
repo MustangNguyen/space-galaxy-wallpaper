@@ -1,0 +1,9 @@
+{
+  "damping": 0.2,
+  "spring": 0.5,
+  "quality": "detail",
+  "particleBudget": 96000,
+  "interactionHz": 240,
+  "fpsCap": null,
+  "brightness": 0.75
+}

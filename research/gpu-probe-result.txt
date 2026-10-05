@@ -1,0 +1,6 @@
+EGL 1.5
+Vendor: NVIDIA Corporation
+Renderer: NVIDIA GeForce RTX 3050/PCIe/SSE2
+GL: OpenGL ES 3.2 NVIDIA 595.91.07
+Point sizes: 1..2047
+Existing painting shaders: compiled and linked. No visible window created; FPS not tested.

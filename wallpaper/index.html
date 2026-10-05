@@ -38,10 +38,11 @@
       footer { left: 18px; right: 18px; bottom: 18px; flex-direction: column; gap: 12px; }
       button, select, .upload { padding: 8px; }
     }
+  header, footer, #status, #pointer-ring { display: none !important; }
   </style>
   <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 </head>
-<body>
+<body data-wallpaper="true">
   <header><p class="eyebrow">Chuyển động · Sắc màu</p><h1>Đêm đầy sao, từng hạt.</h1><p id="caption">Vincent van Gogh · 1889</p></header>
   <span id="status">Đang chuẩn bị hạt…</span>
   <div id="message" role="status">Đang lấy màu từ bức tranh…</div>

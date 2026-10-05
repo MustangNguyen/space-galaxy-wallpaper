@@ -1,4 +1,8 @@
+/build*/
+__pycache__/
+*.py[cod]
+*.log
+/research/gpu-probe
 .claude/
 .omc/
-node_modules/
-*.log
+.omx/
